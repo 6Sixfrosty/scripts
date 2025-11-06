@@ -1,6 +1,6 @@
 # ====================
 # Bibliotecas
-from dotenv import dotenv_values, set_key
+from dotenv import load_dotenv ,dotenv_values, set_key
 from pathlib import Path
 from time import sleep
 import os
@@ -46,9 +46,13 @@ Pressione [Enter] para iniciar...
 
 # ====================
 # Funções utilitárias
-def load_credentials():
+def load_env(method):
     global credentials
-    credentials = dotenv_values(env_path)
+    match method:
+        case "load_dotenv":
+            load_dotenv(dotenv_path=env_path, override=True)
+        case "load_credentials":    
+            credentials = dotenv_values(env_path)
 
 def credentials_Verify():
     if not credentials.get("EMAIL"):
@@ -145,7 +149,7 @@ Opção Desejada: """))
                     print("Salvando ...."); 
                     set_key(env_path, "EMAIL", email_defined)
                     set_key(env_path, "PASS", pass_defined)
-                    load_credentials()
+                    load_env("load_credentials")
                     sleep(1); print("Credenciais Salvas, voltando para o menu"); Clean(); menu();break
                 case 2:
                     continue
@@ -215,27 +219,27 @@ def menu():
 # ====================
 # Configuração do .env
 def configure_env():
+    env_data = dotenv_values(env_path)
     missing_vars = []
-    if not credentials.get("EMAIL"):
-        missing_vars.append("EMAIL")
-    if not credentials.get("PASS"):
-        missing_vars.append("PASS")
+
+    for var in ("EMAIL", "PASS"):
+        if var not in env_data:
+            missing_vars.append(var)
 
     if missing_vars:
         print(f"⚠️ Variáveis ausentes: {', '.join(missing_vars)}")
-        sleep(.8)
-        print("Adicionando variáveis ao .env...")
-        sleep(2)
+        print(); sleep(.8)
         for var in missing_vars:
-            set_key(env_path, var, "")
-        print("✅ Variáveis adicionadas com sucesso!")
-        sleep(1.4)
-    else:
+            set_key(env_path, var, "''")
+        print("✅ Variáveis adicionadas ao .env!")
+
+    if not missing_vars:
         print("✅ Todas as variáveis estão configuradas corretamente.")
 
 # ====================
 # Função inicial
 def Env_Data():
+    load_env("load_dotenv")
     print("🔍 Verificador iniciado...\n")
     sleep(.8)
     print("Procurando arquivo [.env]...\n")
@@ -270,12 +274,13 @@ Digite o número da opção desejada: """))
             print("✅ Arquivo [.env] criado com sucesso.")
             sleep(1)
             configure_env()
-            print("✔️ Configuração concluída.\n")
+            print("✔️ Verificação concluída.\n")
             break
         else:
             print("❌ Opção inválida.")
 
     print("Saindo do verificador...\n")
+    menu()
 
 
 # ====================
